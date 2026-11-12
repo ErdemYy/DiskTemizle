@@ -23,5 +23,8 @@ dist-ssr
 *.sln
 *.sw?
 
-# graphify
-graphify-out/cache/
+# Local AI-tooling files (machine-specific paths, regenerated locally)
+graphify-out/
+CLAUDE.md
+.claude/settings.json
+.claude/settings.local.json
