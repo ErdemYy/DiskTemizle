@@ -12,7 +12,15 @@ import {
   type ScanProgress,
 } from "./lib/api";
 import { formatBytes as fmt } from "./lib/format";
-import { CATEGORIES, QUICK_CATEGORIES, isUserFiles, type CategoryId, type Report, type ScanResult } from "./lib/types";
+import {
+  CATEGORIES,
+  QUICK_CATEGORIES,
+  isUserFiles,
+  usesFileList,
+  type CategoryId,
+  type Report,
+  type ScanResult,
+} from "./lib/types";
 
 export type WinId = CategoryId | "settings" | "about" | "history";
 export type Phase = "open" | "closing" | "minimizing" | "minimized";
@@ -38,6 +46,7 @@ export interface Win {
 
 const SIZES: Record<WinId, [number, number]> = {
   temp: [660, 460],
+  recycle_bin: [740, 460],
   browser: [660, 460],
   dev_cache: [660, 460],
   dev_artifacts: [660, 460],
@@ -114,6 +123,7 @@ const save = (k: string, v: string) => {
 
 const emptySelection = (): Record<CategoryId, Set<string>> => ({
   temp: new Set(),
+  recycle_bin: new Set(),
   browser: new Set(),
   dev_cache: new Set(),
   dev_artifacts: new Set(),
@@ -205,7 +215,7 @@ export const useStore = create<State>((set, get) => ({
       z,
       phase: "open",
       zoomed: false,
-      view: isCategory(id) && isUserFiles(id) ? "list" : "icon",
+      view: isCategory(id) && usesFileList(id) ? "list" : "icon",
       minDx: 0,
       minDy: 400,
     };
@@ -305,9 +315,16 @@ export const useStore = create<State>((set, get) => ({
         scans: { ...s.scans, [c]: result },
         // Kullanımda olabilecek öğeler varsayılan olarak seçili gelmez. Kullanıcı dosyalarında
         // (büyük/yinelenen) hiçbir şey önceden seçilmez; öneriler açıkça "Önerilenleri Seç" ile işaretlenir.
+        // Geri Dönüşüm Kutusu kalıcı silme olduğu için yalnızca eski (önerilen) öğeler seçili gelir.
         selected: {
           ...s.selected,
-          [c]: new Set(isUserFiles(c) ? [] : result.items.filter((i) => !i.recently_modified).map((i) => i.path)),
+          [c]: new Set(
+            isUserFiles(c)
+              ? []
+              : c === "recycle_bin"
+                ? result.items.filter((i) => i.recommended).map((i) => i.path)
+                : result.items.filter((i) => !i.recently_modified).map((i) => i.path),
+          ),
         },
       }));
     } catch (e) {

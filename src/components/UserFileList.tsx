@@ -104,7 +104,7 @@ export function UserFileList({ id, items }: { id: CategoryId; items: Item[] }) {
                   ) : null}
                   <span className="truncate">{item.reason ? t(`reason.${item.reason}`) : ""}</span>
                 </span>
-                {!grouped && (
+                {!grouped && id !== "recycle_bin" && (
                   <span className="h-1 overflow-hidden rounded-full bg-black/15">
                     <span className="block h-full rounded-full" style={{ width: `${item.score}%`, background: item.recommended ? "#2fa62a" : color }} />
                   </span>

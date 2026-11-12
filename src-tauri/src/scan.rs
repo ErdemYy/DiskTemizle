@@ -22,6 +22,8 @@ pub enum Category {
     DevArtifacts,
     LargeFiles,
     Duplicates,
+    /// Geri Dönüşüm Kutusu: listeleme salt-okunur; boşaltma kalıcıdır ve yalnızca kullanıcı seçerse yapılır.
+    RecycleBin,
 }
 
 impl Category {
@@ -33,6 +35,7 @@ impl Category {
             "dev_artifacts" => Some(Self::DevArtifacts),
             "large_files" => Some(Self::LargeFiles),
             "duplicates" => Some(Self::Duplicates),
+            "recycle_bin" => Some(Self::RecycleBin),
             _ => None,
         }
     }
@@ -164,6 +167,7 @@ pub fn roots_for(cat: Category) -> Vec<PathBuf> {
             }
         }
         Category::DevArtifacts | Category::LargeFiles | Category::Duplicates => out.extend(env("USERPROFILE")),
+        Category::RecycleBin => {} // kabuk API'siyle listelenir, dosya sistemi kökü yok
     }
     out.into_iter().filter(|p| p.is_dir()).collect()
 }
@@ -196,12 +200,15 @@ pub fn scan_roots(
     if cat.is_user_files() {
         return pool().install(|| crate::finder::scan(cat, roots, policy, cancel, progress));
     }
+    if cat == Category::RecycleBin {
+        return pool().install(|| crate::recycle::scan(cancel, progress));
+    }
 
     pool().install(|| {
         // 1) Aday arama
         let found = AtomicU32::new(0);
         let candidates: Vec<PathBuf> = match cat {
-            Category::LargeFiles | Category::Duplicates => unreachable!("handled by finder"),
+            Category::LargeFiles | Category::Duplicates | Category::RecycleBin => unreachable!("handled above"),
             Category::DevArtifacts => {
                 let out = Mutex::new(Vec::new());
                 for root in roots {

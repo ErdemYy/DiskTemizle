@@ -1,9 +1,30 @@
-export type CategoryId = "temp" | "browser" | "dev_cache" | "dev_artifacts" | "large_files" | "duplicates";
+export type CategoryId =
+  | "temp"
+  | "recycle_bin"
+  | "browser"
+  | "dev_cache"
+  | "dev_artifacts"
+  | "large_files"
+  | "duplicates";
 
-export const CATEGORIES: CategoryId[] = ["temp", "browser", "dev_cache", "dev_artifacts", "large_files", "duplicates"];
+export const CATEGORIES: CategoryId[] = [
+  "temp",
+  "recycle_bin",
+  "browser",
+  "dev_cache",
+  "dev_artifacts",
+  "large_files",
+  "duplicates",
+];
 
 /** "Tümünü Tara" yalnızca hızlı kategorileri tarar; kullanıcı dosyası bulucuları tüm profili gezdiği için kendi pencerelerinden başlar. */
-export const QUICK_CATEGORIES: CategoryId[] = ["temp", "browser", "dev_cache", "dev_artifacts"];
+export const QUICK_CATEGORIES: CategoryId[] = ["temp", "recycle_bin", "browser", "dev_cache", "dev_artifacts"];
+
+/** Geri alınamayan temizlik: Geri Dönüşüm Kutusu'nu boşaltmak öğeleri kalıcı siler. */
+export const isIrreversible = (c: CategoryId) => c === "recycle_bin";
+
+/** Dosya listesi görünümünü (ad, öneri, yaş, boyut) kullanan kategoriler. */
+export const usesFileList = (c: CategoryId) => isUserFiles(c) || c === "recycle_bin";
 
 /** Kullanıcının kendi dosyalarını listeleyen kategoriler: hiçbir şey önceden seçilmez, yalnızca Geri Dönüşüm'e taşınır. */
 export const USER_FILE_CATEGORIES: CategoryId[] = ["large_files", "duplicates"];
@@ -11,6 +32,7 @@ export const isUserFiles = (c: CategoryId) => USER_FILE_CATEGORIES.includes(c);
 
 /** Kalıcı silme yalnızca yeniden üretilebilir önbelleklerde sunulur (Rust tarafı da aynısını uygular). */
 export const PERMANENT_ALLOWED: Record<CategoryId, boolean> = {
+  recycle_bin: false, // zaten kalıcıdır; ayrı bir "kalıcı sil" seçeneği yoktur, onay uyarısı bunu açıkça söyler
   temp: true,
   browser: true,
   dev_cache: true,

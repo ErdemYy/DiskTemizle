@@ -1,6 +1,7 @@
 pub mod cleanup;
 pub mod disk;
 pub mod finder;
+pub mod recycle;
 pub mod safety;
 pub mod scan;
 
@@ -48,7 +49,7 @@ async fn undo_clean(app: tauri::AppHandle, paths: Vec<String>) -> Result<cleanup
 
 /// Salt-okunur: yalnızca aday listesi döndürür, hiçbir şeyi silmez.
 /// Kategori başına bir iptal bayrağı; pencere kapanınca `cancel_scan` ile kurulur.
-static CANCEL: [AtomicBool; 6] = [const { AtomicBool::new(false) }; 6];
+static CANCEL: [AtomicBool; 7] = [const { AtomicBool::new(false) }; 7];
 
 fn cancel_flag(cat: scan::Category) -> &'static AtomicBool {
     &CANCEL[match cat {
@@ -58,6 +59,7 @@ fn cancel_flag(cat: scan::Category) -> &'static AtomicBool {
         scan::Category::DevArtifacts => 3,
         scan::Category::LargeFiles => 4,
         scan::Category::Duplicates => 5,
+        scan::Category::RecycleBin => 6,
     }]
 }
 

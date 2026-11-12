@@ -30,7 +30,7 @@ export const onScanProgress = (cb: (p: ScanProgress) => void): Promise<() => voi
   inTauri ? listen<ScanProgress>("scan-progress", (e) => cb(e.payload)) : Promise.resolve(() => {});
 
 export const cleanItems = (id: CategoryId, paths: string[], permanent: boolean): Promise<Report> =>
-  inTauri ? invoke("clean_items", { id, paths, permanent }) : mockClean(paths, permanent);
+  inTauri ? invoke("clean_items", { id, paths, permanent }) : mockClean(paths, permanent || id === "recycle_bin");
 
 export const undoClean = (paths: string[]): Promise<Report> =>
   inTauri ? invoke("undo_clean", { paths }) : mockUndo(paths);
@@ -58,7 +58,7 @@ export const diskInfo = (): Promise<DiskInfo> =>
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const MB = 1024 * 1024;
 
-const MOCK: Record<Exclude<CategoryId, "large_files" | "duplicates">, [string, number, number, boolean][]> = {
+const MOCK: Record<Exclude<CategoryId, "large_files" | "duplicates" | "recycle_bin">, [string, number, number, boolean][]> = {
   temp: [
     ["C:\\Users\\demo\\AppData\\Local\\Temp\\installer_cache", 842 * MB, 312, false],
     ["C:\\Users\\demo\\AppData\\Local\\Temp\\crash_dumps", 410 * MB, 18, false],
@@ -98,7 +98,14 @@ const fileItem = (path: string, size_bytes: number, age_days: number, extra: Par
 });
 
 /** Kullanıcı dosyası kategorileri için sahte veri (öneri puanları ve kopya grupları dahil). */
-const MOCK_FILES: Record<"large_files" | "duplicates", Item[]> = {
+const MOCK_FILES: Record<"large_files" | "duplicates" | "recycle_bin", Item[]> = {
+  recycle_bin: [
+    fileItem("C:\\Users\\demo\\Documents\\eski_proje", 391 * MB, 28, { file_count: 812, reason: "in_bin" }),
+    fileItem("C:\\Users\\demo\\Videos\\CapCut", 78 * MB, 8, { file_count: 40, reason: "in_bin" }),
+    fileItem("C:\\Users\\demo\\Desktop\\rapor_taslak.docx", 3 * MB, 61, { reason: "in_bin", recommended: true }),
+    fileItem("C:\\Users\\demo\\Desktop\\eski_sunum.pptx", 22 * MB, 94, { reason: "in_bin", recommended: true }),
+    fileItem("C:\\Users\\demo\\Downloads\\setup_old.exe", 140 * MB, 180, { reason: "in_bin", recommended: true }),
+  ],
   large_files: [
     fileItem("C:\\Users\\demo\\Downloads\\ubuntu-24.04.iso", 5.8 * 1024 * MB, 220, { score: 88, reason: "disk_image", recommended: true }),
     fileItem("C:\\Users\\demo\\Downloads\\Setup_Studio_2024.exe", 1.2 * 1024 * MB, 400, { score: 85, reason: "installer", recommended: true }),
@@ -117,12 +124,12 @@ const MOCK_FILES: Record<"large_files" | "duplicates", Item[]> = {
 
 async function mockScan(id: CategoryId): Promise<ScanResult> {
   await wait(600);
-  if (id === "large_files" || id === "duplicates") {
+  if (id === "large_files" || id === "duplicates" || id === "recycle_bin") {
     const items = MOCK_FILES[id].filter((i) => !removed.has(i.path));
-    const total_bytes =
-      id === "duplicates"
-        ? items.filter((i) => i.recommended).reduce((s, i) => s + i.size_bytes, 0)
-        : items.filter((i) => i.recommended).reduce((s, i) => s + i.size_bytes, 0);
+    // "Kazanılabilir": kutuda hepsi; bulucularda yalnızca önerilenler.
+    const total_bytes = items
+      .filter((i) => id === "recycle_bin" || i.recommended)
+      .reduce((s, i) => s + i.size_bytes, 0);
     return { category: id, items, total_bytes, rejected: 0, hidden_recent: 0 };
   }
   const items = MOCK[id]

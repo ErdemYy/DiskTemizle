@@ -24,6 +24,7 @@ const tr = {
   },
   cat: {
     temp: { name: "Geçici Dosyalar", desc: "Windows ve uygulama geçici klasörleri" },
+    recycle_bin: { name: "Geri Dönüşüm Kutusu", desc: "Silinmiş dosyalar. Boşaltılınca geri getirilemez" },
     browser: { name: "Tarayıcı Önbelleği", desc: "Chrome, Edge, Firefox. Çerez ve şifrelere dokunulmaz" },
     dev_cache: { name: "Geliştirici Önbellekleri", desc: "npm ve pip indirme önbellekleri" },
     dev_artifacts: { name: "Proje Artıkları", desc: "node_modules, target, dist gibi yeniden üretilebilir klasörler" },
@@ -40,6 +41,7 @@ const tr = {
     personal_doc: "Belge",
     other: "Diğer",
     duplicate: "Kopya",
+    in_bin: "Silinmiş",
   },
   age: { today: "bugün", days: "{{count}} gün", months: "{{count}} ay", years: "{{count}} yıl" },
   dock: { scanAll: "Tümünü Tara", settings: "Ayarlar", history: "Günlük" },
@@ -100,6 +102,10 @@ const tr = {
     safe: "Öğeler Geri Dönüşüm Kutusu'na taşınır ve geri alınabilir.",
     permanent: "Kalıcı olarak sil (Geri Dönüşüm'e taşıma)",
     permanentWarn: "Kalıcı silme geri alınamaz.",
+    binTitle: "{{count}} öğe kalıcı olarak silinsin mi?",
+    binWarn:
+      "Bu işlem geri alınamaz. Geri Dönüşüm Kutusu'ndan kaldırılan öğeler, Günlük'teki Geri Al ile de geri getirilemez.",
+    binConfirm: "Kalıcı Sil",
     cancel: "Vazgeç",
     confirm: "Temizle",
     working: "Temizleniyor…",
@@ -149,6 +155,7 @@ const en: typeof tr = {
   },
   cat: {
     temp: { name: "Temporary Files", desc: "Windows and app temp folders" },
+    recycle_bin: { name: "Recycle Bin", desc: "Deleted files. Cannot be recovered once emptied" },
     browser: { name: "Browser Cache", desc: "Chrome, Edge, Firefox. Cookies and passwords are never touched" },
     dev_cache: { name: "Developer Caches", desc: "npm and pip download caches" },
     dev_artifacts: { name: "Project Leftovers", desc: "Regenerable folders like node_modules, target, dist" },
@@ -165,6 +172,7 @@ const en: typeof tr = {
     personal_doc: "Document",
     other: "Other",
     duplicate: "Duplicate",
+    in_bin: "Deleted",
   },
   age: { today: "today", days: "{{count}} d", months: "{{count}} mo", years: "{{count}} yr" },
   dock: { scanAll: "Scan All", settings: "Preferences", history: "History" },
@@ -225,6 +233,10 @@ const en: typeof tr = {
     safe: "Items are moved to the Recycle Bin and can be restored.",
     permanent: "Delete permanently (skip Recycle Bin)",
     permanentWarn: "Permanent deletion cannot be undone.",
+    binTitle: "Permanently delete {{count}} items?",
+    binWarn:
+      "This cannot be undone. Items removed from the Recycle Bin can no longer be restored with Undo in History either.",
+    binConfirm: "Delete Permanently",
     cancel: "Cancel",
     confirm: "Clean",
     working: "Cleaning…",

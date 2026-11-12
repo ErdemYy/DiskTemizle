@@ -1,7 +1,7 @@
 import { ShieldCheck } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { CATEGORIES, isUserFiles } from "../lib/types";
+import { CATEGORIES, usesFileList } from "../lib/types";
 import { activeWindowId, useStore } from "../store";
 
 interface Item {
@@ -79,7 +79,7 @@ export function MenuBar() {
           { label: t("menu.asIcons"), check: activeView === "icon", disabled: !activeCat, onClick: () => activeId && s.setWinView(activeId, "icon") },
           { label: t("menu.asList"), check: activeView === "list", disabled: !activeCat, onClick: () => activeId && s.setWinView(activeId, "list") },
           { label: "", separator: true },
-          { label: t("menu.selectRecommended"), disabled: !activeCat || !isUserFiles(activeCat), onClick: () => activeCat && s.selectRecommended(activeCat, true) },
+          { label: t("menu.selectRecommended"), disabled: !activeCat || !usesFileList(activeCat), onClick: () => activeCat && s.selectRecommended(activeCat, true) },
           { label: t("menu.selectAll"), disabled: !activeCat, onClick: () => activeCat && s.toggleAll(activeCat, true) },
           { label: t("menu.selectNone"), disabled: !activeCat, onClick: () => activeCat && s.toggleAll(activeCat, false) },
         ],

@@ -15,6 +15,8 @@ pub trait Remover {
     fn trash(&self, path: &Path) -> Result<(), String>;
     fn remove_permanent(&self, path: &Path) -> Result<(), String>;
     fn restore(&self, original: &Path) -> Result<(), String>;
+    /// Geri Dönüşüm Kutusu'ndaki öğeleri (özgün yollarına göre) kalıcı siler. Sonuç `paths` ile aynı sırada.
+    fn purge_from_bin(&self, paths: &[String]) -> Vec<Result<u64, String>>;
 }
 
 pub struct SystemRemover;
@@ -27,6 +29,10 @@ impl Remover for SystemRemover {
     fn remove_permanent(&self, path: &Path) -> Result<(), String> {
         let meta = fs::symlink_metadata(path).map_err(|e| e.to_string())?;
         if meta.is_dir() { fs::remove_dir_all(path) } else { fs::remove_file(path) }.map_err(|e| e.to_string())
+    }
+
+    fn purge_from_bin(&self, paths: &[String]) -> Vec<Result<u64, String>> {
+        crate::recycle::purge(paths)
     }
 
     fn restore(&self, original: &Path) -> Result<(), String> {
@@ -156,7 +162,8 @@ impl Journal {
                 "trashed" => {
                     last_trashed.insert(k, i);
                 }
-                "restored" => {
+                // Geri yüklendi ya da Geri Dönüşüm'den kalıcı silindi: artık geri alınamaz.
+                "restored" | "deleted" => {
                     last_trashed.remove(&k);
                 }
                 _ => {}
@@ -189,6 +196,24 @@ pub fn run_with(
     remover: &dyn Remover,
     journal: &Journal,
 ) -> Result<Report, String> {
+    // Geri Dönüşüm Kutusu: öğeler zaten silinmiş; burada kutudan kalıcı kaldırılır. Politika gerekmez
+    // (canlı dosyalara dokunulmaz) ama yalnızca kutuda gerçekten bulunan öğeler silinir.
+    if cat == Category::RecycleBin {
+        let mut report = Report { outcomes: Vec::new(), freed_bytes: 0 };
+        for (raw, res) in paths.iter().zip(remover.purge_from_bin(paths)) {
+            let outcome = match res {
+                Ok(bytes) => Outcome { path: raw.clone(), action: Action::Deleted, bytes, detail: None },
+                Err(e) => Outcome { path: raw.clone(), action: Action::Skipped, bytes: 0, detail: Some(e) },
+            };
+            journal.record("RecycleBin", &outcome)?;
+            if outcome.action == Action::Deleted {
+                report.freed_bytes += outcome.bytes;
+            }
+            report.outcomes.push(outcome);
+        }
+        return Ok(report);
+    }
+
     // Kalıcı silme yalnızca yeniden üretilebilir önbellek kategorilerinde; geliştirici artığında
     // ve kullanıcının kendi dosyalarında asla.
     let permanent = permanent && cat != Category::DevArtifacts && !cat.is_user_files();
@@ -263,6 +288,7 @@ mod tests {
         trashed: RefCell<Vec<PathBuf>>,
         removed: RefCell<Vec<PathBuf>>,
         restored: RefCell<Vec<PathBuf>>,
+        purged: RefCell<Vec<String>>,
         fail: bool,
     }
     impl Remover for Fake {
@@ -278,6 +304,13 @@ mod tests {
         fn restore(&self, p: &Path) -> Result<(), String> {
             self.restored.borrow_mut().push(p.to_path_buf());
             Ok(())
+        }
+        fn purge_from_bin(&self, paths: &[String]) -> Vec<Result<u64, String>> {
+            self.purged.borrow_mut().extend(paths.iter().cloned());
+            paths
+                .iter()
+                .map(|p| if p.contains("missing") { Err("not in Recycle Bin".to_string()) } else { Ok(100) })
+                .collect()
         }
     }
 
@@ -469,6 +502,34 @@ mod tests {
         assert_eq!(e.len(), 2);
         assert_eq!(e[0].action, "restored");
         assert!(e.iter().all(|x| !x.undoable), "{e:?}");
+    }
+
+    #[test]
+    fn recycle_bin_purge_records_deleted_and_skips_unknown() {
+        let sb = Sandbox::new("bin");
+        let fake = Fake::default();
+        let policy = Policy::new(&[], &[], &[]);
+        let paths = vec!["C:\\x\\a.txt".to_string(), "C:\\x\\missing.txt".to_string()];
+        let r = run_with(Category::RecycleBin, &paths, false, &policy, &fake, &sb.journal()).unwrap();
+        assert_eq!(r.outcomes[0].action, Action::Deleted);
+        assert_eq!(r.outcomes[1].action, Action::Skipped);
+        assert_eq!(r.freed_bytes, 100);
+        assert_eq!(fake.purged.borrow().len(), 2);
+        assert!(fake.trashed.borrow().is_empty() && fake.removed.borrow().is_empty());
+        assert!(sb.log().contains("\"deleted\""));
+    }
+
+    #[test]
+    fn purging_from_bin_makes_trashed_entry_not_undoable() {
+        let sb = Sandbox::new("binundo");
+        let j = sb.journal();
+        let a = sb.file("tmp/a.bin", 3);
+        let policy = Policy::new(&[], &[], &[sb.0.join("tmp")]);
+        let r = run_with(Category::Temp, &[s(&a)], false, &policy, &Fake::default(), &j).unwrap();
+        let trashed = r.outcomes[0].path.clone();
+        assert!(j.read(10).unwrap()[0].undoable);
+        run_with(Category::RecycleBin, &[trashed], false, &policy, &Fake::default(), &j).unwrap();
+        assert!(j.read(10).unwrap().iter().all(|e| !e.undoable));
     }
 
     #[test]

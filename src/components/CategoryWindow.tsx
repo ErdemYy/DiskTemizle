@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { formatBytes } from "../lib/format";
 import { CATEGORY_META } from "../lib/meta";
 import type { CategoryId, Item } from "../lib/types";
-import { PERMANENT_ALLOWED, isUserFiles } from "../lib/types";
+import { PERMANENT_ALLOWED, isIrreversible, isUserFiles, usesFileList } from "../lib/types";
 import { useStore, type Win } from "../store";
 import { AquaTile, FileIcon, FolderIcon } from "./icons";
 import { UserFileList } from "./UserFileList";
@@ -24,7 +24,8 @@ export function CategoryWindow({ id, win }: { id: CategoryId; win: Win }) {
   const { t, i18n } = useTranslation();
   const { scans, scanning, progress, selected, scan, toggle, toggleAll, setWinView, selectRecommended } = useStore();
   const [confirming, setConfirming] = useState(false);
-  const userFiles = isUserFiles(id);
+  // Büyük/yinelenen dosyalar ve Geri Dönüşüm Kutusu ortak "öneri listesi" görünümünü kullanır.
+  const userFiles = usesFileList(id);
 
   const prog = progress[id];
   const progText = !prog
@@ -205,6 +206,7 @@ function ConfirmSheet({ id, count, bytes, onClose }: { id: CategoryId; count: nu
   const { t, i18n } = useTranslation();
   const { clean, cleaning } = useStore();
   const [permanent, setPermanent] = useState(false);
+  const irreversible = isIrreversible(id);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && !cleaning && onClose();
@@ -225,13 +227,13 @@ function ConfirmSheet({ id, count, bytes, onClose }: { id: CategoryId; count: nu
         className="sheet aqua-pinstripes w-[380px] rounded-b-lg border border-t-0 border-black/40 p-4 shadow-[0_10px_28px_rgba(0,0,0,.45)]"
       >
         <div className="flex gap-4">
-          <AquaTile color="#3b82f6" glyph={ShieldCheck} size={52} />
+          <AquaTile color={irreversible ? "#c0392b" : "#3b82f6"} glyph={irreversible ? TriangleAlert : ShieldCheck} size={52} />
           <div className="min-w-0 flex-1">
             <h2 id="sheet-title" className="text-[13px] font-bold">
-              {t("confirm.title", { count })}
+              {t(irreversible ? "confirm.binTitle" : "confirm.title", { count })}
             </h2>
             <p className="mt-1 text-xs text-[#333]">
-              {t("confirm.summary", { size: formatBytes(bytes, i18n.language) })} {t("confirm.safe")}
+              {t("confirm.summary", { size: formatBytes(bytes, i18n.language) })} {t(irreversible ? "confirm.binWarn" : "confirm.safe")}
             </p>
             {isUserFiles(id) && <p className="mt-1.5 text-xs font-medium text-[#8a4b00]">{t("win.userFilesNote")}</p>}
             {PERMANENT_ALLOWED[id] && (
@@ -251,12 +253,18 @@ function ConfirmSheet({ id, count, bytes, onClose }: { id: CategoryId; count: nu
           </div>
         </div>
         <div className="mt-4 flex justify-end gap-2">
-          <button className="aqua-btn" onClick={onClose} disabled={cleaning}>
+          <button className="aqua-btn" onClick={onClose} disabled={cleaning} autoFocus={irreversible}>
             {t("confirm.cancel")}
           </button>
-          <button className="aqua-btn primary pulse flex items-center gap-1.5" onClick={() => void submit()} disabled={cleaning} autoFocus>
+          {/* Geri alınamayan işlemde odak "Vazgeç" düğmesindedir; yanlışlıkla Enter ile silinmez. */}
+          <button
+            className={`aqua-btn ${irreversible ? "danger" : "primary pulse"} flex items-center gap-1.5`}
+            onClick={() => void submit()}
+            disabled={cleaning}
+            autoFocus={!irreversible}
+          >
             {cleaning && <Loader2 size={13} className="animate-spin" />}
-            {cleaning ? t("confirm.working") : t("confirm.confirm")}
+            {cleaning ? t("confirm.working") : t(irreversible ? "confirm.binConfirm" : "confirm.confirm")}
           </button>
         </div>
       </div>

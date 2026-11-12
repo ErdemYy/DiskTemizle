@@ -5,6 +5,7 @@
   --c-browser: #14b8a6;
   --c-dev-cache: #8b5cf6;
   --c-dev-artifacts: #f59e0b;
+  --c-bin: #64748b;
   --c-large: #ef4444;
   --c-dup: #d946ef;
   --aqua-blue: #3b82f6;
@@ -175,6 +176,21 @@ body {
 }
 .aqua-btn.primary:active:not(:disabled) {
   background: linear-gradient(#0084c0, #006090 48%, #004d78 52%, #0070a8);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+.aqua-btn.danger {
+  color: #fff;
+  text-shadow: 0 -1px 1px rgba(0, 0, 0, 0.4);
+  background: linear-gradient(#f6b0a8, #e8554a 40%, #c0261c 60%, #dc3d32);
+  border: 1px solid #a01a12;
+  box-shadow:
+    inset 0 1px rgba(255, 255, 255, 0.7),
+    inset 0 -1px rgba(0, 0, 0, 0.1),
+    0 0 8px rgba(220, 60, 50, 0.35),
+    0 1px 3px rgba(0, 0, 0, 0.2);
+}
+.aqua-btn.danger:active:not(:disabled) {
+  background: linear-gradient(#c0261c, #9a1b13 48%, #85150e 52%, #a81f16);
   box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4);
 }
 .aqua-btn.pulse:not(:disabled) {
