@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8fd6ff"/>
+      <stop offset=".45" stop-color="#2f93f2"/>
+      <stop offset="1" stop-color="#0d54bd"/>
+    </linearGradient>
+    <linearGradient id="gloss" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity=".75"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity=".05"/>
+    </linearGradient>
+    <linearGradient id="shield" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#cfe6fb"/>
+    </linearGradient>
+    <linearGradient id="check" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3b9bf5"/>
+      <stop offset="1" stop-color="#1767d0"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feGaussianBlur stdDeviation="22"/>
+    </filter>
+    <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8"/>
+    </filter>
+    <clipPath id="clip"><rect x="64" y="64" width="896" height="896" rx="208"/></clipPath>
+  </defs>
+
+  <!-- zemin gölgesi -->
+  <rect x="84" y="112" width="856" height="856" rx="208" fill="#001a4d" opacity=".45" filter="url(#shadow)"/>
+
+  <!-- Aqua kare -->
+  <rect x="64" y="64" width="896" height="896" rx="208" fill="url(#tile)"/>
+  <g clip-path="url(#clip)">
+    <ellipse cx="512" cy="120" rx="560" ry="360" fill="url(#gloss)"/>
+    <rect x="64" y="64" width="896" height="896" rx="208" fill="none" stroke="#ffffff" stroke-opacity=".55" stroke-width="10"/>
+  </g>
+
+  <!-- kalkan -->
+  <path d="M512 214 L772 312 V522 C772 690 656 796 512 858 C368 796 252 690 252 522 V312 Z"
+        fill="#00265e" opacity=".35" filter="url(#soft)" transform="translate(0 16)"/>
+  <path d="M512 214 L772 312 V522 C772 690 656 796 512 858 C368 796 252 690 252 522 V312 Z"
+        fill="url(#shield)" stroke="#ffffff" stroke-width="10" stroke-linejoin="round"/>
+  <path d="M512 262 L728 344 V522 C728 660 636 752 512 808 C388 752 296 660 296 522 V344 Z"
+        fill="none" stroke="#9cc8f2" stroke-opacity=".7" stroke-width="8" stroke-linejoin="round"/>
+
+  <!-- onay işareti -->
+  <path d="M398 528 L480 610 L634 436" fill="none" stroke="#00265e" stroke-opacity=".3" stroke-width="68"
+        stroke-linecap="round" stroke-linejoin="round" transform="translate(0 10)" filter="url(#soft)"/>
+  <path d="M398 528 L480 610 L634 436" fill="none" stroke="url(#check)" stroke-width="64"
+        stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

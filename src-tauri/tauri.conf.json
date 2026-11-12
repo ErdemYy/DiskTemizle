@@ -40,6 +40,7 @@
     ],
     "windows": {
       "nsis": {
+        "installerIcon": "icons/icon.ico",
         "installMode": "currentUser",
         "languages": ["Turkish", "English"],
         "displayLanguageSelector": false
