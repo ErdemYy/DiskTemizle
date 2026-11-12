@@ -124,6 +124,11 @@ const tr = {
     wallpaper: "Masaüstü Resmi",
     aqua: "Aqua",
     graphite: "Grafit",
+    excluded: "Hariç Tutulan Klasörler",
+    excludedHint: "Buradaki klasörler taranmaz ve içlerindeki hiçbir şey silinmez. Bir klasörü içeren üst klasör de silinmez.",
+    addFolder: "Klasör Ekle…",
+    removeFolder: "Kaldır",
+    noExcluded: "Henüz hariç tutulan klasör yok.",
     safetyTitle: "Güvenlik",
     safetyBody:
       "Sistem klasörleri, Belgeler, Masaüstü, Resimler, .git ve .ssh her zaman korunur ve bu korumalar kapatılamaz. Hiçbir şey siz onaylamadan silinmez.",
@@ -255,6 +260,11 @@ const en: typeof tr = {
     wallpaper: "Desktop Picture",
     aqua: "Aqua",
     graphite: "Graphite",
+    excluded: "Excluded Folders",
+    excludedHint: "Folders listed here are never scanned and nothing inside them is deleted. A parent folder containing one is not deleted either.",
+    addFolder: "Add Folder…",
+    removeFolder: "Remove",
+    noExcluded: "No excluded folders yet.",
     safetyTitle: "Safety",
     safetyBody:
       "System folders, Documents, Desktop, Pictures, .git and .ssh are always protected and this cannot be turned off. Nothing is deleted without your confirmation.",

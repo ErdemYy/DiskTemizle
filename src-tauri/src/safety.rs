@@ -15,6 +15,8 @@ pub enum SafetyError {
     OutsideAllowedRoots,
     SensitiveComponent(String),
     NotDevArtifact,
+    /// Kullanıcının hariç tuttuğu klasörün içinde ya da onu içeriyor.
+    Excluded(String),
 }
 
 impl fmt::Display for SafetyError {
@@ -29,6 +31,7 @@ impl fmt::Display for SafetyError {
             Self::OutsideAllowedRoots => write!(f, "outside the category's allowed roots"),
             Self::SensitiveComponent(c) => write!(f, "sensitive folder in path: {c}"),
             Self::NotDevArtifact => write!(f, "not a recognised developer artifact"),
+            Self::Excluded(p) => write!(f, "excluded by you: {p}"),
         }
     }
 }
@@ -64,6 +67,8 @@ pub struct Policy {
     exe: Option<Vec<String>>,
     /// Uygulama verisi (AppData): `Mode::UserFile` için mutlak korumalı.
     app_roots: Vec<Vec<String>>,
+    /// Kullanıcının hariç tuttuğu klasörler: her modda, içi de üstü de korumalı.
+    excluded: Vec<Vec<String>>,
 }
 
 impl Policy {
@@ -76,7 +81,13 @@ impl Policy {
             allowed_roots: norm(allowed),
             exe,
             app_roots: Vec::new(),
+            excluded: Vec::new(),
         }
+    }
+
+    pub fn with_excluded(mut self, excluded: &[PathBuf]) -> Self {
+        self.excluded = excluded.iter().filter_map(|p| components(&resolve_lossy(p))).collect();
+        self
     }
 
     pub fn with_app_roots(mut self, app: &[PathBuf]) -> Self {
@@ -113,7 +124,9 @@ impl Policy {
         let app: Vec<PathBuf> = std::env::var_os("USERPROFILE")
             .map(|h| vec![PathBuf::from(h).join("AppData")])
             .unwrap_or_default();
-        Self::new(&system, &user, allowed).with_app_roots(&app)
+        Self::new(&system, &user, allowed)
+            .with_app_roots(&app)
+            .with_excluded(&crate::settings::excluded_paths())
     }
 
     /// Doğrular ve silinecek kesin (çözümlenmiş) yolu döndürür.
@@ -141,6 +154,12 @@ impl Policy {
         }
         if self.exe.as_ref().is_some_and(|exe| exe.starts_with(&comps)) {
             return Err(SafetyError::ContainsProtected("running application".into()));
+        }
+        // Hariç tutulan klasör: içindeki yol da, onu içeren üst klasör de silinemez.
+        for root in &self.excluded {
+            if comps.starts_with(root) || root.starts_with(&comps) {
+                return Err(SafetyError::Excluded(root.join("\\")));
+            }
         }
         for root in &self.system_roots {
             self.check_root(&comps, root, true)?;
@@ -204,7 +223,7 @@ pub fn plain(p: &Path) -> String {
 }
 
 /// `\\?\` önekini atar, bileşenleri küçük harfe çevirir (Windows büyük/küçük harf duyarsız).
-fn components(p: &Path) -> Option<Vec<String>> {
+pub(crate) fn components(p: &Path) -> Option<Vec<String>> {
     let s = p.to_string_lossy();
     let s = s.strip_prefix(r"\\?\").unwrap_or(&s);
     let out: Vec<String> = Path::new(s)
@@ -293,6 +312,26 @@ mod tests {
         assert!(matches!(p.validate(&git, Mode::UserFile), Err(SafetyError::SensitiveComponent(_))));
         // Aynı dosya Strict modda hâlâ korumalı (Belgeler).
         assert!(matches!(p.validate(&doc, Mode::Strict), Err(SafetyError::Protected(_))));
+    }
+
+    #[test]
+    fn excluded_folders_block_inside_equal_and_ancestor_in_every_mode() {
+        let sb = Sandbox::new("excl");
+        let keep = sb.dir("proj/node_modules/keepme");
+        let victim = sb.dir("proj/node_modules/other");
+        let nm = sb.dir("proj/node_modules");
+        let p = policy(&sb, &[]).with_excluded(&[keep.clone()]);
+
+        // Kendisi, içi ve onu içeren üst klasör reddedilir (üst klasör silinse korunan klasör de giderdi).
+        for mode in [Mode::Strict, Mode::DevArtifact, Mode::UserFile] {
+            assert!(matches!(p.validate(&keep, mode), Err(SafetyError::Excluded(_))), "{mode:?} equal");
+            assert!(matches!(p.validate(&nm, mode), Err(SafetyError::Excluded(_))), "{mode:?} ancestor");
+        }
+        let inner = sb.file_in("proj/node_modules/keepme/data.bin");
+        assert!(matches!(p.validate(&inner, Mode::UserFile), Err(SafetyError::Excluded(_))));
+        // Kardeş klasör etkilenmez.
+        assert!(p.validate(&victim, Mode::DevArtifact).is_err()); // ad `other`: artık adı değil
+        assert!(!matches!(p.validate(&victim, Mode::Strict), Err(SafetyError::Excluded(_))));
     }
 
     #[test]

@@ -4,8 +4,10 @@ import {
   cancelScan,
   cleanItems,
   diskInfo,
+  getExcluded,
   journalEntries,
   scanCategory,
+  setExcluded,
   undoClean,
   type DiskInfo,
   type JournalEntry,
@@ -53,7 +55,7 @@ const SIZES: Record<WinId, [number, number]> = {
   large_files: [740, 480],
   duplicates: [740, 480],
   history: [780, 460],
-  settings: [460, 330],
+  settings: [520, 470],
   about: [340, 270],
 };
 
@@ -79,7 +81,11 @@ interface State {
   notice: Notice | null;
   disk: DiskInfo | null;
   history: JournalEntry[];
+  excluded: string[];
 
+  loadExcluded: () => Promise<void>;
+  addExcluded: (path: string) => Promise<void>;
+  removeExcluded: (path: string) => Promise<void>;
   setProgress: (p: ScanProgress) => void;
   loadDisk: () => Promise<void>;
   loadHistory: () => Promise<void>;
@@ -156,6 +162,18 @@ export const useStore = create<State>((set, get) => ({
   notice: null,
   disk: null,
   history: [],
+  excluded: [],
+
+  loadExcluded: async () => {
+    try {
+      set({ excluded: await getExcluded() });
+    } catch {
+      /* liste isteğe bağlı: boş görünür, Rust tarafı yine de uygular */
+    }
+  },
+
+  addExcluded: async (path) => commitExcluded([...get().excluded, path]),
+  removeExcluded: async (path) => commitExcluded(get().excluded.filter((p) => p.toLowerCase() !== path.toLowerCase())),
 
   loadHistory: async () => {
     try {
@@ -425,6 +443,44 @@ export const useStore = create<State>((set, get) => ({
 
   dismissNotice: () => set({ notice: null }),
 }));
+
+/** Yol, hariç klasörün kendisi, içi ya da onu içeren üst klasör mü? (Rust kapısıyla aynı kural.) */
+const touchesExcluded = (path: string, excluded: string[]) => {
+  const p = path.toLowerCase().replace(/[\\/]+$/, "");
+  return excluded.some((raw) => {
+    const e = raw.toLowerCase().replace(/[\\/]+$/, "");
+    return p === e || p.startsWith(`${e}\\`) || e.startsWith(`${p}\\`);
+  });
+};
+
+/** "Kazanılabilir" toplam: kutuda hepsi, bulucularda yalnızca önerilenler, diğerlerinde hepsi. */
+const reclaimable = (c: CategoryId, items: ScanResult["items"]) =>
+  items.filter((i) => c !== "large_files" && c !== "duplicates" ? true : i.recommended).reduce((t, i) => t + i.size_bytes, 0);
+
+/**
+ * Listeyi Rust'a kaydeder; başarılıysa mevcut tarama sonuçlarından hariç klasörlerle çakışan öğeleri
+ * anında düşürür (yeniden tarama gerekmez). Rust silme kapısı zaten aynı öğeleri reddeder.
+ */
+async function commitExcluded(next: string[]) {
+  const { set, get } = { set: useStore.setState, get: useStore.getState };
+  try {
+    const saved = await setExcluded(next);
+    const scans = { ...get().scans };
+    const selected = { ...get().selected };
+    for (const c of CATEGORIES) {
+      const scan = scans[c];
+      if (!scan) continue;
+      const items = scan.items.filter((i) => !touchesExcluded(i.path, saved));
+      if (items.length === scan.items.length) continue;
+      scans[c] = { ...scan, items, total_bytes: reclaimable(c, items) };
+      const keep = new Set(items.map((i) => i.path));
+      selected[c] = new Set([...selected[c]].filter((p) => keep.has(p)));
+    }
+    set({ excluded: saved, scans, selected });
+  } catch (e) {
+    set({ notice: { kind: "error", message: i18n.t("notice.error"), detail: errText(e) } });
+  }
+}
 
 /** Temizlenen öğeleri taramadan düşer ve toplamı günceller. */
 function applyReport(c: CategoryId, report: Report) {

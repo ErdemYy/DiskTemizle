@@ -372,7 +372,12 @@ fn find_artifacts(
                 return None;
             }
             let name = e.file_name().to_string_lossy().to_lowercase();
-            (!SKIP_DIRS.contains(&name.as_str())).then(|| (e.path(), name))
+            if SKIP_DIRS.contains(&name.as_str()) {
+                return None;
+            }
+            let path = e.path();
+            // Kullanıcının hariç tuttuğu klasörlere hiç girilmez.
+            (!crate::settings::is_excluded(&path)).then_some((path, name))
         })
         .collect();
 

@@ -4,6 +4,7 @@ pub mod finder;
 pub mod recycle;
 pub mod safety;
 pub mod scan;
+pub mod settings;
 
 use std::sync::atomic::{AtomicBool, Ordering};
 use tauri::{Emitter, Manager};
@@ -17,6 +18,23 @@ fn open_journal(app: &tauri::AppHandle) -> Result<cleanup::Journal, String> {
 #[tauri::command]
 fn journal_entries(app: tauri::AppHandle, limit: Option<usize>) -> Result<Vec<cleanup::Entry>, String> {
     open_journal(&app)?.read(limit.unwrap_or(500).min(5000))
+}
+
+fn settings_dir(app: &tauri::AppHandle) -> Result<std::path::PathBuf, String> {
+    app.path().app_data_dir().map_err(|e| e.to_string())
+}
+
+/// Hariç tutulan klasörler (sadeleştirilmiş yollar).
+#[tauri::command]
+fn get_excluded() -> Vec<String> {
+    settings::excluded_paths().iter().map(|p| safety::plain(p)).collect()
+}
+
+/// Listeyi doğrular, kaydeder ve etkinleştirir. Geçersiz girdide hata döner, önceki liste kalır.
+#[tauri::command]
+fn set_excluded(app: tauri::AppHandle, paths: Vec<String>) -> Result<Vec<String>, String> {
+    let list = settings::set(&settings_dir(&app)?, &paths)?;
+    Ok(list.iter().map(|p| safety::plain(p)).collect())
 }
 
 #[tauri::command]
@@ -89,7 +107,24 @@ fn cancel_scan(id: String) {
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![scan_category, cancel_scan, clean_items, undo_clean, disk_info, journal_entries])
+        .plugin(tauri_plugin_dialog::init())
+        .setup(|app| {
+            // Kayıtlı hariç klasörler, ilk taramadan önce etkinleştirilir.
+            if let Ok(dir) = app.path().app_data_dir() {
+                settings::load(&dir);
+            }
+            Ok(())
+        })
+        .invoke_handler(tauri::generate_handler![
+            scan_category,
+            cancel_scan,
+            clean_items,
+            undo_clean,
+            disk_info,
+            journal_entries,
+            get_excluded,
+            set_excluded
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

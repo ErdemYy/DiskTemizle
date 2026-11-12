@@ -18,6 +18,10 @@ export default function App() {
   const windows = useStore((s) => s.windows);
 
   useEffect(() => {
+    void useStore.getState().loadExcluded();
+  }, []);
+
+  useEffect(() => {
     // Rust tarafındaki canlı tarama ilerlemesi.
     let stop = () => {};
     let disposed = false;

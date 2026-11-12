@@ -35,6 +35,38 @@ export const cleanItems = (id: CategoryId, paths: string[], permanent: boolean):
 export const undoClean = (paths: string[]): Promise<Report> =>
   inTauri ? invoke("undo_clean", { paths }) : mockUndo(paths);
 
+export const getExcluded = (): Promise<string[]> => (inTauri ? invoke("get_excluded") : Promise.resolve([...mockExcluded]));
+
+/** Listeyi doğrulayıp kaydeder; geçersiz girdide reddeder ve önceki liste kalır. */
+export const setExcluded = (paths: string[]): Promise<string[]> =>
+  inTauri ? invoke("set_excluded", { paths }) : mockSetExcluded(paths);
+
+/** Yerel klasör seçici. İptal edilirse `null`. Tarayıcıda (Tauri dışı) basit bir istem kullanır. */
+export async function pickFolder(): Promise<string | null> {
+  if (inTauri) {
+    const { open } = await import("@tauri-apps/plugin-dialog");
+    const r = await open({ directory: true, multiple: false });
+    return typeof r === "string" ? r : null;
+  }
+  return window.prompt("C:\\Users\\demo\\Projects\\private")?.trim() || null;
+}
+
+const mockExcluded: string[] = [];
+async function mockSetExcluded(paths: string[]): Promise<string[]> {
+  await wait(120);
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const raw of paths) {
+    const p = raw.trim();
+    if (!/^[a-z]:\\.+/i.test(p)) throw new Error(`not an absolute path: ${p}`);
+    if (seen.has(p.toLowerCase())) continue;
+    seen.add(p.toLowerCase());
+    out.push(p);
+  }
+  mockExcluded.splice(0, mockExcluded.length, ...out.sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase())));
+  return [...mockExcluded];
+}
+
 export interface JournalEntry {
   ts: number;
   /** Kategori kimliği ya da geri alma kayıtları için "undo". */

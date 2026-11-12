@@ -60,7 +60,8 @@ fn walk(dir: &Path, depth: usize, min_size: u64, out: &Mutex<Vec<FileInfo>>, fou
                 continue;
             }
             let path = e.path();
-            if !is_artifact(&path, &name) {
+            // Derleme çıktıları ve kullanıcının hariç tuttuğu klasörler taranmaz.
+            if !is_artifact(&path, &name) && !crate::settings::is_excluded(&path) {
                 dirs.push(path);
             }
         } else if m.is_file() && m.len() >= min_size {
@@ -469,6 +470,26 @@ mod tests {
         let keeper = r.items.iter().find(|i| i.keep).unwrap();
         assert!(keeper.path.ends_with("kept.bin"), "{}", keeper.path);
         assert!(r.items.iter().find(|i| i.recommended).unwrap().path.contains("Downloads"));
+    }
+
+    #[test]
+    fn excluded_folders_are_not_walked_by_the_finders() {
+        let _g = crate::settings::TEST_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        let sb = Sandbox::new("excl");
+        let same = vec![2u8; 3000];
+        sb.file("kept/a.bin", &same);
+        sb.file("kept/b.bin", &same);
+        sb.file("private/a.bin", &same);
+        sb.file("private/b.bin", &same);
+        crate::settings::install(&[fs::canonicalize(sb.0.join("private")).unwrap()]);
+        let cancel = AtomicBool::new(false);
+        let l = scan_large(&[sb.0.clone()], &policy(&sb), &ctx(Category::LargeFiles, &cancel), 100).unwrap();
+        let d = scan_dups(&[sb.0.clone()], &policy(&sb), &ctx(Category::Duplicates, &cancel), 100).unwrap();
+        crate::settings::install(&[]);
+        assert!(l.items.iter().all(|i| !i.path.contains("private")), "{:?}", l.items.iter().map(|i| &i.path).collect::<Vec<_>>());
+        assert_eq!(l.items.len(), 2);
+        assert!(d.items.iter().all(|i| !i.path.contains("private")));
+        assert_eq!(d.items.len(), 2);
     }
 
     #[test]

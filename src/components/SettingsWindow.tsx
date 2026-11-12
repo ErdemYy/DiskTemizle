@@ -1,13 +1,14 @@
-import { ShieldCheck } from "lucide-react";
+import { Folder, FolderPlus, ShieldCheck } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { Lang } from "../i18n";
+import { pickFolder } from "../lib/api";
 import { useStore, type Wallpaper as WP, type Win } from "../store";
 import { Wallpaper } from "./Wallpaper";
 import { Window } from "./Window";
 
 export function SettingsWindow({ win }: { win: Win }) {
   const { t } = useTranslation();
-  const { lang, setLang, wallpaper, setWallpaper } = useStore();
+  const { lang, setLang, wallpaper, setWallpaper, excluded, addExcluded, removeExcluded } = useStore();
 
   return (
     <Window win={win} title={t("settings.title")} resizable={false}>
@@ -42,6 +43,37 @@ export function SettingsWindow({ win }: { win: Win }) {
             ))}
           </div>
         </Row>
+
+        <section aria-label={t("settings.excluded")}>
+          <div className="flex items-center justify-between">
+            <span className="font-medium">{t("settings.excluded")}</span>
+            <button
+              className="aqua-btn small flex items-center gap-1"
+              onClick={async () => {
+                const p = await pickFolder();
+                if (p) await addExcluded(p);
+              }}
+            >
+              <FolderPlus size={12} />
+              {t("settings.addFolder")}
+            </button>
+          </div>
+          <p className="mt-1 text-[11px] text-[#555]">{t("settings.excludedHint")}</p>
+          <ul className="mt-2 max-h-32 overflow-auto rounded-md border border-black/25 bg-white">
+            {excluded.length === 0 && <li className="px-3 py-2 text-xs text-[#777]">{t("settings.noExcluded")}</li>}
+            {excluded.map((p) => (
+              <li key={p} className="aqua-row flex items-center gap-2 px-3 py-1 text-xs">
+                <Folder size={13} className="shrink-0 text-[#6b7a99]" />
+                <span className="min-w-0 flex-1 truncate" title={p}>
+                  {p}
+                </span>
+                <button className="aqua-btn small shrink-0" onClick={() => void removeExcluded(p)} aria-label={`${t("settings.removeFolder")} ${p}`}>
+                  {t("settings.removeFolder")}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
 
         <div className="flex items-start gap-3 rounded-md border border-black/25 bg-white/70 p-3">
           <ShieldCheck size={18} className="mt-0.5 shrink-0 text-[#2fa62a]" />
