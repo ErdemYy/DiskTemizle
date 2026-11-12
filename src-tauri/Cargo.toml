@@ -1,8 +1,8 @@
 [package]
 name = "disktemizle"
 version = "0.1.0"
-description = "A Tauri App"
-authors = ["you"]
+description = "DiskTemizle: güvenli disk temizleyici"
+authors = ["Erdem"]
 edition = "2024"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -34,5 +34,5 @@ tauri-plugin-dialog = "2.8.4"
 codegen-units = 1
 lto = true
 opt-level = 3
-panic = "abort"
+# `panic = "abort"` bilerek kullanılmıyor: tarama iş parçacığındaki bir panik tüm uygulamayı kapatmasın.
 strip = true
