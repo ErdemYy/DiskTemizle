@@ -1,0 +1,423 @@
+@import "tailwindcss";
+
+:root {
+  --c-temp: #3b82f6;
+  --c-browser: #14b8a6;
+  --c-dev-cache: #8b5cf6;
+  --c-dev-artifacts: #f59e0b;
+  --c-large: #ef4444;
+  --c-dup: #d946ef;
+  --aqua-blue: #3b82f6;
+  --menubar-h: 22px;
+  --font-aqua: "Lucida Grande", "Lucida Sans Unicode", "Segoe UI", system-ui, sans-serif;
+  color-scheme: light;
+}
+
+@theme inline {
+  --font-sans: var(--font-aqua);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  margin: 0;
+  background: #000;
+  color: #000;
+  font-family: var(--font-aqua);
+  font-size: 13px;
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+  cursor: default;
+}
+
+:focus-visible {
+  outline: 2px solid rgba(59, 130, 246, 0.7);
+  outline-offset: 1px;
+}
+
+/* ---------- Aqua pencere ---------- */
+.aqua-pinstripes {
+  background-color: #ededed;
+  background-image: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0) 0,
+    rgba(0, 0, 0, 0) 1px,
+    rgba(255, 255, 255, 0.7) 1px,
+    rgba(255, 255, 255, 0.7) 2px
+  );
+}
+
+.aqua-window {
+  background-color: #ededed;
+  border: 1px solid rgba(0, 0, 0, 0.4);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.4),
+    inset 0 1px rgba(255, 255, 255, 0.8),
+    inset 1px 0 rgba(255, 255, 255, 0.4),
+    inset -1px 0 rgba(255, 255, 255, 0.4);
+}
+.aqua-window.inactive {
+  box-shadow:
+    0 6px 18px rgba(0, 0, 0, 0.3),
+    inset 0 1px rgba(255, 255, 255, 0.8);
+}
+
+.aqua-titlebar {
+  position: relative;
+  height: 22px;
+  cursor: move;
+  text-shadow: 0 1px rgba(255, 255, 255, 0.8);
+  background: linear-gradient(#f8f8f8, #e8e8e8 48%, #d4d4d4 52%, #c8c8c8);
+  border-bottom: 1px solid #888;
+}
+.aqua-titlebar.active {
+  background: linear-gradient(#f8f8f8, #d8d8d8 48%, #c4c4c4 52%, #b8b8b8);
+}
+.aqua-title {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+}
+.aqua-titlebar.active .aqua-title {
+  color: #000;
+}
+
+/* Trafik ışıkları */
+.traffic {
+  position: relative;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.35);
+  display: grid;
+  place-items: center;
+  font-size: 9px;
+  line-height: 1;
+  font-weight: 800;
+  color: transparent;
+  box-shadow: inset 0 -1px 2px rgba(0, 0, 0, 0.25), 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+.traffic::after {
+  content: "";
+  position: absolute;
+  top: 1px;
+  left: 2px;
+  right: 2px;
+  height: 5px;
+  border-radius: 50%;
+  background: linear-gradient(rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.1));
+}
+.traffic.close {
+  background: radial-gradient(circle at 50% 80%, #ff8d80, #e0382b 70%);
+}
+.traffic.min {
+  background: radial-gradient(circle at 50% 80%, #ffd866, #e6a100 70%);
+}
+.traffic.zoom {
+  background: radial-gradient(circle at 50% 80%, #8be069, #2fa62a 70%);
+}
+.traffics:hover .traffic {
+  color: rgba(0, 0, 0, 0.6);
+}
+.traffics:hover .traffic::after {
+  display: none;
+}
+.inactive-win .traffic {
+  background: #cfcfcf;
+  box-shadow: inset 0 -1px 2px rgba(0, 0, 0, 0.15);
+}
+
+/* ---------- Aqua düğme ---------- */
+.aqua-btn {
+  position: relative;
+  overflow: hidden;
+  color: #000;
+  background: linear-gradient(#fafafa, #e0e0e0 48%, #cacaca 52%, #e8e8e8);
+  border: 1px solid #888;
+  border-radius: 20px;
+  padding: 2px 16px;
+  font-size: 13px;
+  box-shadow:
+    inset 0 1px rgba(255, 255, 255, 0.9),
+    inset 0 -1px rgba(0, 0, 0, 0.06),
+    0 1px 3px rgba(0, 0, 0, 0.15);
+}
+.aqua-btn:active:not(:disabled) {
+  background: linear-gradient(#c4c4c4, #a8a8a8 48%, #989898 52%, #b0b0b0);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+.aqua-btn:disabled {
+  opacity: 0.5;
+}
+.aqua-btn.primary {
+  color: #fff;
+  text-shadow: 0 -1px 1px rgba(0, 0, 0, 0.35);
+  background: linear-gradient(#a8dcf8, #3ab5f0 40%, #0084c0 60%, #1aa0e0);
+  border: 1px solid #0069a8;
+  box-shadow:
+    inset 0 1px rgba(255, 255, 255, 0.75),
+    inset 0 -1px rgba(0, 0, 0, 0.1),
+    0 0 8px rgba(0, 150, 220, 0.35),
+    0 1px 3px rgba(0, 0, 0, 0.2);
+}
+.aqua-btn.primary:active:not(:disabled) {
+  background: linear-gradient(#0084c0, #006090 48%, #004d78 52%, #0070a8);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+.aqua-btn.pulse:not(:disabled) {
+  animation: aqua-pulse 1.4s ease-in-out infinite;
+}
+.aqua-btn.small {
+  padding: 1px 10px;
+  font-size: 12px;
+}
+@keyframes aqua-pulse {
+  0%,
+  100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.18) saturate(1.1);
+  }
+}
+
+/* Segmentli kontrol */
+.aqua-seg {
+  display: inline-flex;
+  border: 1px solid #888;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+.aqua-seg button {
+  padding: 1px 12px;
+  font-size: 12px;
+  background: linear-gradient(#fafafa, #e0e0e0 48%, #cacaca 52%, #e8e8e8);
+  border-right: 1px solid #888;
+}
+.aqua-seg button:last-child {
+  border-right: 0;
+}
+.aqua-seg button[aria-checked="true"] {
+  background: linear-gradient(#a8dcf8, #3ab5f0 40%, #0084c0 60%, #1aa0e0);
+  color: #fff;
+  text-shadow: 0 -1px 1px rgba(0, 0, 0, 0.35);
+}
+
+/* İlerleme çubuğu */
+.aqua-progress {
+  height: 10px;
+  border-radius: 6px;
+  border: 1px solid #7a7a7a;
+  overflow: hidden;
+  background: linear-gradient(#cfcfcf, #f2f2f2);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+.aqua-progress > i {
+  display: block;
+  height: 100%;
+  background:
+    repeating-linear-gradient(-45deg, rgba(255, 255, 255, 0.35) 0 8px, transparent 8px 16px),
+    linear-gradient(#8fd0f6, #2aa2e6 50%, #1a8fd8);
+  background-size: 22.6px 22.6px, 100% 100%;
+  animation: aqua-barber 0.7s linear infinite;
+}
+@keyframes aqua-barber {
+  to {
+    background-position: 22.6px 0, 0 0;
+  }
+}
+
+/* ---------- Menü çubuğu ---------- */
+.aqua-menubar {
+  backdrop-filter: blur(4px);
+  background: linear-gradient(
+    rgba(255, 255, 255, 0.95),
+    rgba(240, 240, 240, 0.95) 45%,
+    rgba(220, 220, 220, 0.95) 50%,
+    rgba(230, 230, 230, 0.95)
+  );
+  border-bottom: 1px solid rgba(0, 0, 0, 0.3);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+}
+.aqua-menu-item {
+  padding: 0 10px;
+  font-size: 14px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+.aqua-menu-item.active {
+  color: #fff;
+  background: var(--aqua-blue);
+}
+.aqua-dropdown {
+  backdrop-filter: blur(8px);
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(0, 0, 0, 0.3);
+  border-top: 0;
+  border-radius: 0 0 6px 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  padding: 3px 0;
+  min-width: 190px;
+}
+.aqua-dropdown-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 2px 16px;
+  font-size: 14px;
+}
+.aqua-dropdown-item:hover:not(.disabled) {
+  color: #fff;
+  background: var(--aqua-blue);
+}
+.aqua-dropdown-item.disabled {
+  color: #999;
+}
+
+/* ---------- Dock ---------- */
+.aqua-dock-container {
+  backdrop-filter: blur(10px);
+  background: linear-gradient(rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.1));
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-bottom: 0;
+  border-radius: 8px 8px 0 0;
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.2), inset 0 1px rgba(255, 255, 255, 0.8);
+}
+@keyframes dock-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  25%,
+  65% {
+    transform: translateY(-26px);
+  }
+  45%,
+  85% {
+    transform: translateY(0);
+  }
+}
+.dock-bounce {
+  animation: dock-bounce 0.9s ease-out;
+}
+
+/* ---------- Pencere animasyonları ---------- */
+@keyframes aqua-window-open {
+  0% {
+    opacity: 0;
+    transform: scale(0.55) translateY(28px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+@keyframes aqua-window-close {
+  100% {
+    opacity: 0;
+    transform: scale(0.55) translateY(28px);
+  }
+}
+@keyframes aqua-window-minimize {
+  100% {
+    opacity: 0;
+    transform: translate(var(--min-dx, 0px), var(--min-dy, 55vh)) scale(0.15);
+  }
+}
+.window-opening {
+  animation: aqua-window-open 0.28s cubic-bezier(0.2, 0.8, 0.25, 1);
+}
+.window-closing {
+  pointer-events: none;
+  animation: aqua-window-close 0.24s cubic-bezier(0.6, 0.05, 0.8, 0.4) forwards;
+}
+.window-minimizing {
+  pointer-events: none;
+  animation: aqua-window-minimize 0.3s cubic-bezier(0.5, 0, 0.9, 0.6) forwards;
+}
+@keyframes sheet-down {
+  from {
+    transform: translateY(-110%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+.sheet {
+  animation: sheet-down 0.22s cubic-bezier(0.2, 0.8, 0.25, 1);
+}
+
+/* Liste görünümü */
+.aqua-list-header {
+  background: linear-gradient(#fdfdfd, #e6e6e6);
+  border-bottom: 1px solid #b8b8b8;
+  font-size: 11px;
+}
+.aqua-row:nth-child(even) {
+  background: #eef3fb;
+}
+.aqua-row.selected {
+  background: var(--aqua-blue) !important;
+  color: #fff;
+}
+
+@keyframes imac-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes enter-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Aqua kaydırma çubukları */
+::-webkit-scrollbar {
+  width: 15px;
+  height: 15px;
+}
+::-webkit-scrollbar-track {
+  background: linear-gradient(90deg, #e6e6e6, #fafafa);
+  border-left: 1px solid #c8c8c8;
+}
+::-webkit-scrollbar-thumb {
+  border: 1px solid #1a6fb0;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #8fd0f6, #2aa2e6 50%, #1a8fd8);
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.6);
+}
+::-webkit-scrollbar-corner {
+  background: #f0f0f0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
